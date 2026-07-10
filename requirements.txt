@@ -3,3 +3,4 @@ pandas
 plotly
 streamlit
 fpdf2
+scipy
