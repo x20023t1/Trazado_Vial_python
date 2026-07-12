@@ -138,8 +138,21 @@ if not fase_disponible(seleccion):
     st.sidebar.warning("⚠️ Completa la fase anterior antes de continuar.")
 
 st.sidebar.divider()
-progreso = sum(st.session_state.fase_completada.values()) / 10
-st.sidebar.progress(progreso, text=f"Progreso Etapa 1: {int(progreso*100)}%")
+
+grupos_etapas = {
+    "Etapa 1 · Terreno (F1-F5)": [1, 2, 3, 4, 5],
+    "Etapa 2 · Diseño Vial (F6-F8)": [6, 7, 8],
+    "Etapa 3 · Registro y Reporte (F9-F10)": [9, 10],
+}
+
+for nombre_etapa, fases in grupos_etapas.items():
+    completadas = sum(st.session_state.fase_completada[f] for f in fases)
+    total = len(fases)
+    progreso_etapa = completadas / total
+    st.sidebar.progress(
+        progreso_etapa,
+        text=f"{nombre_etapa}: {int(progreso_etapa*100)}%",
+    )
 
 # ----------------------------------------------------------------------
 # Si la fase pedida no está disponible, forzamos la última disponible
@@ -545,17 +558,49 @@ def vista_fase6():
 
     col1, col2 = st.columns(2)
     with col1:
-        ancho_via = st.number_input("Ancho de vía (W en metros):", min_value=1.0, max_value=20.0, value=10.0, step=0.5)
+        ancho_via = st.number_input(
+            "Ancho de vía (W en metros):",
+            min_value=0.01, value=10.0, step=0.5,
+            help="Debe ser mayor que 0. No hay límite superior, pero se te "
+                 "avisará si el valor es poco convencional (> 20 m).",
+        )
+        if ancho_via > 20:
+            st.warning(
+                f"⚠️ {ancho_via:.2f} m es un ancho de vía poco convencional "
+                "(fuera del rango típico de diseño vial). ¿Seguro que es correcto?"
+            )
     with col2:
-        presupuesto_m3 = st.number_input("Presupuesto de Tierra (Volumen Máximo M³):", min_value=100, max_value=1_000_000, value=40_000, step=1000)
+        presupuesto_m3 = st.number_input(
+            "Presupuesto de Tierra (Volumen Máximo M³):",
+            min_value=0, value=40_000, step=1000,
+            help="No hay límite superior, pero se te avisará si el valor "
+                 "es exageradamente alto (> 1,000,000 m³).",
+        )
+        if presupuesto_m3 > 1_000_000:
+            st.warning(
+                f"⚠️ {presupuesto_m3:,} m³ es un presupuesto de tierra "
+                "inusualmente alto. ¿Seguro que es correcto?"
+            )
 
     if st.button("💾 Guardar Parámetros", use_container_width=True):
-        st.session_state.parametros_via = {
-            "ancho_via": ancho_via,
-            "presupuesto_m3": presupuesto_m3,
-        }
-        marcar_completada(6)
-        st.rerun()
+        if ancho_via <= 0 or presupuesto_m3 < 0:
+            st.error(
+                "El ancho de vía debe ser mayor que cero y el presupuesto de "
+                "tierra no puede ser negativo."
+            )
+        else:
+            if presupuesto_m3 == 0:
+                st.warning(
+                    "⚠️ Presupuesto en 0 m³: en la Fase 8 el tractor no podrá "
+                    "avanzar (se detendrá en la Estaca 0+000) porque no hay "
+                    "volumen de tierra disponible para mover."
+                )
+            st.session_state.parametros_via = {
+                "ancho_via": ancho_via,
+                "presupuesto_m3": presupuesto_m3,
+            }
+            marcar_completada(6)
+            st.rerun()
 
     if st.session_state.fase_completada[6]:
         st.success("✅ Guardado. Avanza a la Fase 7.")
@@ -787,7 +832,6 @@ def vista_fase7():
             with cols[ci]:
                 v = st.number_input(
                     lbl, value=pend_vals[ti],
-                    min_value=-18.0, max_value=18.0,
                     step=0.5, key=f"pend_{ti}", format="%.2f",
                 )
                 pend_vals[ti] = v
