@@ -138,7 +138,7 @@ if not fase_disponible(seleccion):
     st.sidebar.warning("⚠️ Completa la fase anterior antes de continuar.")
 
 st.sidebar.divider()
-
+#f
 grupos_etapas = {
     "Etapa 1 · Terreno (F1-F5)": [1, 2, 3, 4, 5],
     "Etapa 2 · Diseño Vial (F6-F8)": [6, 7, 8],
