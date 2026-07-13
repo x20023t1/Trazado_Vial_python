@@ -2,6 +2,7 @@
 topo_utils.py
 Funciones de cálculo puro para el simulador topográfico.
 Sin dependencias de Streamlit: solo numpy / scipy / math.
+k
 """
 import math
 import numpy as np
