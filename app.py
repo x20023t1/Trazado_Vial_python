@@ -15,6 +15,7 @@ import tempfile
 import os
 import base64
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -45,6 +46,11 @@ st.set_page_config(
     page_icon="🏔️",
     layout="wide",
 )
+
+# Zona horaria de Ecuador continental (UTC-5). El servidor donde corre
+# Streamlit suele estar en UTC, así que sin esto las fechas/horas
+# guardadas (SQLite y PDF) salían desfasadas.
+TZ_ECUADOR = ZoneInfo("America/Guayaquil")
 
 COLORES_TRAMO = [
     "red", "limegreen", "cyan", "magenta",
@@ -1373,7 +1379,7 @@ def vista_fase9():
                     longitud_lograda, corte, relleno, pendientes)
                    VALUES (?,?,?,?,?,?,?,?,?,?)""",
                 (nombre.strip(),
-                 datetime.now().strftime("%Y-%m-%d %H:%M"),
+                 datetime.now(TZ_ECUADOR).strftime("%Y-%m-%d %H:%M"),
                  par["ancho_via"],
                  par["presupuesto_m3"],
                  talud_c, talud_r,
@@ -1517,7 +1523,7 @@ def _generar_pdf(nombre_proyecto, datos, imagen_bytes=None):
 
     fuente("", 10)
     pdf.set_text_color(80, 80, 80)
-    pdf.cell(0, 6, f"Fecha de emision: {datetime.now().strftime('%d/%m/%Y  %H:%M')}", ln=True)
+    pdf.cell(0, 6, f"Fecha de emision: {datetime.now(TZ_ECUADOR).strftime('%d/%m/%Y  %H:%M')}", ln=True)
     pdf.cell(0, 6, "Elaborado con: Simulador Computacional de Trazado Vial", ln=True)
     pdf.ln(4)
     pdf.set_draw_color(30, 80, 160)
